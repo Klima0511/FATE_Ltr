@@ -91,6 +91,4 @@ class LambdaLoss(torch.nn.Module):
 
     def forward(self ,batch_preds, batch_std_labels):
         batch_loss = custom_loss_function(batch_preds, batch_std_labels)
-
-
         return batch_loss
