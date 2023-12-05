@@ -3,7 +3,7 @@ from sklearn.metrics import roc_curve
 import numpy as np
 import logging
 from federatedml.util import consts
-from federatedml.evaluation.metrics import classification_metric
+from federatedml.evaluation.metrics import classification_metric, ranking_metric
 from federatedml.evaluation.metrics import regression_metric
 from federatedml.evaluation.metrics import clustering_metric
 
@@ -60,7 +60,6 @@ class MetricInterface(object):
             The explain variance
         """
         return regression_metric.ExplainedVariance().compute(labels, pred_scores)
-
     @staticmethod
     def mean_absolute_error(labels, pred_scores):
         """
