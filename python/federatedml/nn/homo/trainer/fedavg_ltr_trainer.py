@@ -47,17 +47,16 @@ def ndcg_at_k(self, test_data=None, k=10, presort=False, device='cpu'):
 
     avg_ndcg_at_k = sum_ndcg_at_k / num_queries
     return avg_ndcg_at_k
-
-
+"""
 def load_data(self, eval_dict, data_dict, fold_k):
-    """
+   
     Load the dataset correspondingly.
     :param eval_dict:
     :param data_dict:
     :param fold_k:
     :param model_para_dict:
     :return:
-    """
+
     file_train, file_vali, file_test = self.determine_files(data_dict, fold_k=fold_k)
 
     input_eval_dict = eval_dict if eval_dict['mask_label'] else None  # required when enabling masking data
@@ -82,20 +81,19 @@ def load_data(self, eval_dict, data_dict, fold_k):
         vali_loader = None
 
     return train_loader, test_loader, vali_loader
+"""
 class LTRTrainer(TrainerBase):
-    def __init__(self, epochs, batch_size, model, optimizer, loss_fn, scheduler=None, eval_dict=None, data_dict=None):
+    def __init__(self, epochs, batch_size, scheduler=None, eval_dict=None, data_dict=None):
         super(LTRTrainer, self).__init__()
         self.epochs = epochs
         self.batch_size = batch_size
-        self.model = model
-        self.optimizer = optimizer
-        self.loss_fn = loss_fn
         self.scheduler = scheduler
         self.data_dict = data_dict
         self.eval_dict = eval_dict
-        self.cuda=None
+        self.device=None
+        self.gpu = None
 
-    def train_op(self, batch_q_doc_vectors, batch_std_labels, **kwargs):
+    def train_op(self,_optimizer,_loss_fn, batch_q_doc_vectors, batch_std_labels, **kwargs):
         '''
         The training operation over a batch of queries.
         @param batch_q_doc_vectors: [batch_size, num_docs, num_features], the latter two dimensions {num_docs, num_features} denote feature vectors associated with the same query.
@@ -104,27 +102,28 @@ class LTRTrainer(TrainerBase):
         @return:
         '''
         stop_training = False
-        batch_preds = self.forward(batch_q_doc_vectors)
+        batch_preds = self.model(batch_q_doc_vectors)
+        '''
 
 
         if 'epoch_k' in kwargs and kwargs['epoch_k'] % self.stop_check_freq == 0:
             stop_training = self.stop_training(batch_preds)
-        batch_loss = self.loss_fn(batch_preds, batch_std_labels, **kwargs)
+        '''
+        batch_loss =  _loss_fn(batch_preds, batch_std_labels, **kwargs)
+
+        _optimizer.zero_grad()
+        batch_loss.backward()
+        _optimizer.step()
 
 
         return batch_loss, stop_training
 
     def train(self, train_set, validate_set=None, optimizer=None, loss=None, extra_data={}):
-        input_eval_dict = extra_data.get('eval_dict', 10)
-        data_dict = extra_data.get('eval_dict', 10)
-        _train_data = LTRDataset(file=train_set, split_type=SPLIT_TYPE.Train, presort=data_dict['train_presort'],
-                                 data_dict=data_dict, eval_dict=input_eval_dict)
-        train_letor_sampler = LETORSampler(data_source=_train_data,
-                                           rough_batch_size=data_dict['train_rough_batch_size'])
-        train_loader = torch.utils.data.DataLoader(_train_data, batch_sampler=train_letor_sampler, num_workers=0)
-        sample_num = len(_train_data)
-
-
+        self._optimizer = optimizer
+        self._loss_fn = loss
+        sample_num = len(train_set)
+        train_letor_sampler = LETORSampler(data_source=train_set, rough_batch_size=self.batch_size)
+        train_loader = t.utils.data.DataLoader(train_set, batch_sampler=train_letor_sampler, num_workers=0)
         aggregator = None
         if self.fed_mode:
             aggregator = SecureAggregatorClient(True, aggregate_weight=sample_num,
@@ -134,17 +133,16 @@ class LTRTrainer(TrainerBase):
 
         for epoch in range(self.epochs):
             LOGGER.debug('running epoch {}'.format(epoch))
-            assert 'label_type' in kwargs and 'presort' in kwargs
-            label_type, presort = kwargs['label_type'], kwargs['presort']
             num_queries = 0
             epoch_loss = torch.tensor([0.0], device=self.device)
+
             for batch_ids, batch_q_doc_vectors, batch_std_labels in train_loader:  # batch_size, [batch_size, num_docs, num_features], [batch_size, num_docs]
                 num_queries += len(batch_ids)
                 if self.gpu: batch_q_doc_vectors, batch_std_labels = batch_q_doc_vectors.to(
                     self.device), batch_std_labels.to(self.device)
 
-                batch_loss, stop_training = self.train_op(batch_q_doc_vectors, batch_std_labels, batch_ids=batch_ids,
-                                                          epoch_k=epoch, presort=presort, label_type=label_type)
+                batch_loss, stop_training = self.train_op(self._optimizer, self._loss_fn,batch_q_doc_vectors, batch_std_labels, batch_ids=batch_ids,
+                                                          epoch_k=epoch,)
 
                 if stop_training:
                     break
@@ -177,7 +175,10 @@ class LTRTrainer(TrainerBase):
             # the aggregation process
             if aggregator is not None:
                 self.model = aggregator.model_aggregation(self.model)
-                converge_status = aggregator.loss_aggregation(epoch_loss)
+                loss_value = epoch_loss.item()  # 将 torch.Tensor 转换为 float
+
+                converge_status = aggregator.loss_aggregation(loss_value)
+        metric_string = evaluation (self,file_test = '/data/Corpus/MQ2008/MQ2008/Fold1/test.txt')
 
     # implement the aggregation function, this function will be called by the sever side
     def server_aggregate_procedure(self, extra_data={}):
@@ -207,7 +208,7 @@ def adhoc_performance_at_ks(self, test_data=None, ks=[1, 5, 10],  max_label=None
     '''
     Compute the performance using multiple metrics
     '''
-    self.eval_mode()  # switch evaluation mode
+    #self.eval()  # switch evaluation mode
 
     num_queries = 0
     sum_ndcg_at_ks = torch.zeros(len(ks))
@@ -226,6 +227,7 @@ def adhoc_performance_at_ks(self, test_data=None, ks=[1, 5, 10],  max_label=None
         if self.gpu: batch_preds = batch_preds.cpu()
 
         _, batch_pred_desc_inds = torch.sort(batch_preds, dim=1, descending=True)
+        batch_pred_desc_inds = batch_pred_desc_inds.squeeze(-1)
         batch_predict_rankings = torch.gather(batch_std_labels, dim=1, index=batch_pred_desc_inds)
         if presort:
             batch_ideal_rankings = batch_std_labels
@@ -281,24 +283,29 @@ def metric_results_to_string(list_scores=None, list_cutoffs=None, split_str=', '
         list_str.append(metric + '@{}:{:.4f}'.format(list_cutoffs[i], list_scores[i]))
     return split_str.join(list_str)
 
-def evaluation(self, sample_ids: list, pred_scores: t.Tensor, label: t.Tensor, dataset_type='train',
-                   metric_list=None, epoch_idx=0, task_type=None, file_test=None):
-    _test_data = LTRDataset(file=file_test, split_type=SPLIT_TYPE.Test, data_dict=self.data_dict,
-                            presort=self.data_dict['test_presort'])
+def evaluation(self, file_test=None):
+    vali_k, cutoffs = 5, [1, 3, 5, 10, 20, 50]
+    self.cutoffs = cutoffs
+
+    _test_data = LTRDataset(file=file_test, split_type=SPLIT_TYPE.Test,data_id="MQ2008_Super",
+                                 data_dict=None, eval_dict=None)
     test_letor_sampler = LETORSampler(data_source=_test_data,
-                                      rough_batch_size=self.data_dict['test_rough_batch_size'])
+                                      rough_batch_size=128)
     test_loader = torch.utils.data.DataLoader(_test_data, batch_sampler=test_letor_sampler, num_workers=0)
-    avg_ndcg_at_ks = adhoc_performance_at_ks(test_data=test_loader, ks=self.cutoffs, device='cpu', max_label=4)
+    avg_ndcg_at_ks = adhoc_performance_at_ks(self,test_data=test_loader, ks=self.cutoffs, device='cpu', max_label=4)
     fold_ndcg_ks = avg_ndcg_at_ks.data.numpy()
 
-    self.ndcg_cv_avg_scores = np.add(self.ndcg_cv_avg_scores, fold_ndcg_ks)
+    #ndcg_cv_avg_scores = np.add(self.ndcg_cv_avg_scores, fold_ndcg_ks)
 
     list_metric_strs = []
     list_metric_strs.append(metric_results_to_string(list_scores=fold_ndcg_ks, list_cutoffs=self.cutoffs,
-                                                     metric='nDCG'))
+                                                          metric='nDCG'))
 
     metric_string = '\n\t'.join(list_metric_strs)
-    print("\n{} on Fold - {}\n\t{}".format('fed', metric_string))
+    print("\n{} on Fold - {}\n".format('fed', metric_string))
+
+
+    return metric_string
 
 
 
