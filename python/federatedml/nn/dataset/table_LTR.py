@@ -6,6 +6,7 @@
 """
 
 import pickle
+from federatedml.nn.dataset.base import Dataset
 
 import os
 import numpy as np
@@ -17,7 +18,6 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 import torch
 import torch.utils.data as data
 # import ir_datasets
-
 
 
 
@@ -183,7 +183,7 @@ class SymmetricLog1pScaler(object):
         return np.sign(X) * np.log(1.0 + np.abs(X))
 
 
-def get_data_meta(data_id=None):
+def get_data_meta(data_id=MSLRWEB):
     """ Get the meta-information corresponding to the specified dataset """
     if data_id in MSLRWEB:
         max_rele_level = 4
@@ -622,14 +622,20 @@ def iter_queries(in_file, presort=None, data_dict=None, scale_data=None, scaler_
 
 ## ---------------------------------------------------- ##
 
-class LTRDataset(data.Dataset):
+class LTRDataset(Dataset):
     """
     Loading the specified dataset as torch.utils.data.Dataset.
     We assume that checking the meaningfulness of given loading-setting is conducted beforehand.
     """
-    def __init__(self, split_type, file, data_id=None, data_dict=None, eval_dict=None, presort=False, hot=False, buffer=True):
+    def __init__(self,data_id= None):
+        self.data_id = data_id
+
+    def load(self, file_path, split_type=None, data_dict=None, eval_dict=None, presort=False, hot=False,
+                 buffer=True):
+        data_id = self.data_id
         assert data_id is not None or data_dict is not None
         if data_dict is None: data_dict = self.get_default_data_dict(data_id=data_id)
+        file = str(file_path)
 
         self.hot = hot
 
@@ -637,6 +643,7 @@ class LTRDataset(data.Dataset):
         self.label_type = data_dict['label_type']
 
         ''' split-specific settings '''
+        if split_type is None: split_type=SPLIT_TYPE.Train
         self.split_type = split_type
         self.presort = presort
         self.data_id = data_dict['data_id']

@@ -199,6 +199,7 @@ class LTRTrainer(TrainerBase):
 
         batch_preds = self.model(batch_q_doc_vectors)
 
+
         return batch_preds
 
 
@@ -283,15 +284,19 @@ def metric_results_to_string(list_scores=None, list_cutoffs=None, split_str=', '
         list_str.append(metric + '@{}:{:.4f}'.format(list_cutoffs[i], list_scores[i]))
     return split_str.join(list_str)
 
-def evaluation(self, file_test=None):
+def evaluation(self, file_test=None,data_id = None):
     vali_k, cutoffs = 5, [1, 3, 5, 10, 20, 50]
     self.cutoffs = cutoffs
+    file_path = str(file_test)
+    # 创建 LTRDataset 的实例
+    _test_data_instance = LTRDataset(data_id= "MQ2008_Super")
 
-    _test_data = LTRDataset(file=file_test, split_type=SPLIT_TYPE.Test,data_id="MQ2008_Super",
-                                 data_dict=None, eval_dict=None)
-    test_letor_sampler = LETORSampler(data_source=_test_data,
+    _test_data_instance.load(file_path='/data/Corpus/MQ2008/MQ2008/Fold1/test.txt', split_type=None, data_dict=None,
+                             eval_dict=None, presort=False, hot=False, buffer=True)
+
+    test_letor_sampler = LETORSampler(data_source=_test_data_instance,
                                       rough_batch_size=128)
-    test_loader = torch.utils.data.DataLoader(_test_data, batch_sampler=test_letor_sampler, num_workers=0)
+    test_loader = torch.utils.data.DataLoader(_test_data_instance, batch_sampler=test_letor_sampler, num_workers=0)
     avg_ndcg_at_ks = adhoc_performance_at_ks(self,test_data=test_loader, ks=self.cutoffs, device='cpu', max_label=4)
     fold_ndcg_ks = avg_ndcg_at_ks.data.numpy()
 

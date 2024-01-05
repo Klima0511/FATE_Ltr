@@ -17,7 +17,8 @@
 #
 
 fate_project_base=$(cd `dirname "$(realpath "${BASH_SOURCE[0]:-${(%):-%x}}")"`; cd ../;pwd)
-export FATE_PROJECT_BASE=$fate_project_base
+#export FATE_PROJECT_BASE=$fate_project_base
+export FATE_PROJECT_BASE=/home/user/Workbench/tan_haonan/FATE_Ltr
 export FATE_DEPLOY_BASE=$fate_project_base
 export EGGROLL_HOME=
 export PYTHONPATH=
@@ -26,8 +27,8 @@ export FATE_LOG_LEVEL=DEBUG
 export FATE_PROFILE_LOG_ENABLED=0
 export EGGROLL_LOG_LEVEL=INFO
 
-venv=
+venv=/home/user/anaconda3/envs/FATE_Ltr
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
-source ${venv}/bin/activate
+#source ${venv}/bin/activate
 

@@ -2,7 +2,7 @@ ip:
 port:
 app_key:
 secret_key:
-log_directory:
+log_directory: "/home/user/Workbench/tan_haonan/FATE_Ltr/log"
 console_display_log:
 system_setting:
   role:

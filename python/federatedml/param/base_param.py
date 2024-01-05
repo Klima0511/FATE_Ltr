@@ -327,6 +327,9 @@ class BaseParam(metaclass=_StaticDefaultMeta):
         lower_param = param.lower()
         if lower_param in valid_list:
             return lower_param
+        elif lower_param == 'ranking':
+            return lower_param
+
         else:
             raise ValueError(
                 descr

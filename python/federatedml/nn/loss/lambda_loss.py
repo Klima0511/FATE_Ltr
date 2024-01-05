@@ -52,43 +52,43 @@ def get_pairwise_comp_probs(batch_preds, batch_std_labels, sigma=None):
 
 
 
-def custom_loss_function(self, batch_preds, batch_std_labels, **kwargs):
-    '''
-    @param batch_preds: [batch, ranking_size] each row represents the relevance predictions for documents associated with the same query
-    @param batch_std_labels: [batch, ranking_size] each row represents the standard relevance grades for documents associated with the same query
-    @param kwargs:
-    @return:
-    '''
 
-
-    # sort documents according to the predicted relevance
-    batch_descending_preds, batch_pred_desc_inds = torch.sort(batch_preds, dim=1, descending=True)
-    # reorder batch_stds correspondingly so as to make it consistent.
-    # BTW, batch_stds[batch_preds_sorted_inds] only works with 1-D tensor
-    batch_predict_rankings = torch.gather(batch_std_labels, dim=1, index=batch_pred_desc_inds)
-
-    batch_p_ij, batch_std_p_ij = get_pairwise_comp_probs(batch_preds=batch_descending_preds,
-                                                         batch_std_labels=batch_predict_rankings,
-                                                         sigma=self.sigma)
-
-    batch_delta_ndcg = get_delta_ndcg(batch_ideal_rankings=batch_std_labels,
-                                      batch_predict_rankings=batch_predict_rankings, device=self.device)
-
-    _batch_loss = F.binary_cross_entropy(input=torch.triu(batch_p_ij, diagonal=1),
-                                         target=torch.triu(batch_std_p_ij, diagonal=1),
-                                         weight=torch.triu(batch_delta_ndcg, diagonal=1), reduction='none')
-
-    batch_loss = torch.sum(torch.sum(_batch_loss, dim=(2, 1)))
-
-    self.optimizer.zero_grad()
-    batch_loss.backward()
-    self.optimizer.step()
-
-    return batch_loss
 class LambdaLoss(torch.nn.Module):
     def __init__(self):
-        super(LambdaLoss,self).__init__()
+        super(LambdaLoss,self,).__init__()
 
-    def forward(self ,batch_preds, batch_std_labels):
-        batch_loss = custom_loss_function(batch_preds, batch_std_labels)
+    def forward(self ,batch_preds, batch_std_labels, **kwargs):
+        batch_loss = self.custom_loss_function(batch_preds, batch_std_labels)
+        return batch_loss
+
+    def custom_loss_function(self, batch_preds, batch_std_labels, **kwargs):
+        '''
+        @param batch_preds: [batch, ranking_size] each row represents the relevance predictions for documents associated with the same query
+        @param batch_std_labels: [batch, ranking_size] each row represents the standard relevance grades for documents associated with the same query
+        @param kwargs:
+        @return:
+        '''
+
+        # sort documents according to the predicted relevance
+        batch_descending_preds, batch_pred_desc_inds = torch.sort(batch_preds, dim=1, descending=True)
+        # reorder batch_stds correspondingly so as to make it consistent.
+        # BTW, batch_stds[batch_preds_sorted_inds] only works with 1-D tensor
+        batch_pred_desc_inds = batch_pred_desc_inds.squeeze(-1)
+        batch_predict_rankings = torch.gather(batch_std_labels, dim=1, index=batch_pred_desc_inds)
+
+        batch_p_ij, batch_std_p_ij = get_pairwise_comp_probs(batch_preds=batch_descending_preds,
+                                                             batch_std_labels=batch_predict_rankings,
+                                                             sigma=1.0)
+
+        batch_delta_ndcg = get_delta_ndcg(batch_ideal_rankings=batch_std_labels,
+                                          batch_predict_rankings=batch_predict_rankings, device=None)
+        batch_p_ij = batch_p_ij.squeeze(-1)
+
+        _batch_loss = F.binary_cross_entropy(input=torch.triu(batch_p_ij, diagonal=1),
+                                             target=torch.triu(batch_std_p_ij, diagonal=1),
+                                             weight=torch.triu(batch_delta_ndcg, diagonal=1), reduction='none')
+
+        batch_loss = torch.sum(torch.sum(_batch_loss, dim=(2, 1)))
+
+
         return batch_loss

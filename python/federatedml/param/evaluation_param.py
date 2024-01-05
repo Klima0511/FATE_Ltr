@@ -68,7 +68,8 @@ class EvaluateParam(BaseParam):
             consts.BINARY: consts.DEFAULT_BINARY_METRIC,
             consts.MULTY: consts.DEFAULT_MULTI_METRIC,
             consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC,
-            consts.CLUSTERING: consts.DEFAULT_CLUSTER_METRIC
+            consts.CLUSTERING: consts.DEFAULT_CLUSTER_METRIC,
+            consts.RANKING:  consts.NDCG
         }
 
     def _check_valid_metric(self, metrics_list):
@@ -115,8 +116,7 @@ class EvaluateParam(BaseParam):
     def check(self):
 
         descr = "evaluate param's "
-        self.eval_type = self.check_and_change_lower(self.eval_type,
-                                                     [consts.BINARY, consts.MULTY, consts.REGRESSION,
+        self.eval_type = self.check_and_change_lower(self.eval_type,[consts.RANKING,consts.BINARY, consts.MULTY, consts.REGRESSION,
                                                       consts.CLUSTERING],
                                                      descr)
 

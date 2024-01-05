@@ -26,6 +26,7 @@ RUNTIME_LOG = "runtime"
 
 info_log_path = os.path.join(LogPath.log_directory(), LogPath.INFO)
 debug_log_path = os.path.join(LogPath.log_directory(), LogPath.DEBUG)
+
 error_log_path = os.path.join(LogPath.log_directory(), LogPath.ERROR)
 
 

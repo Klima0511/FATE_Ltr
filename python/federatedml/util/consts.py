@@ -21,12 +21,13 @@ GUEST = 'guest'
 
 MODEL_AGG = "model_agg"
 GRAD_AGG = "grad_agg"
-
+NDCG = 'ndcg'
 BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 CLUSTERING = 'clustering'
+RANKING = 'ranking'
 CAUSAL_LM = "causal_ml"
 SEQ_2_SEQ_LM = "seq_2_seq_lm"
 ONE_VS_REST = 'one_vs_rest'

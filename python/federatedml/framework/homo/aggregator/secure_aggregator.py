@@ -315,6 +315,10 @@ class SecureAggregatorServer(AggregatorBaseServer):
 
     def model_aggregation(self, suffix=tuple(), party_idx=-1):
         agg_model = self.aggregate_model(suffix=suffix, party_idx=party_idx)
+        np.save('/home/user/Workbench/tan_haonan/FATE_Ltr/saved_model/web30_1_epoch_30_batch_size_2048.npy', agg_model)
+
+
+
         self.broadcast_model(agg_model, suffix=suffix, party_idx=party_idx)
         return agg_model
 

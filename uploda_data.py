@@ -11,8 +11,8 @@ pipeline_upload = PipeLine().set_initiator(role='guest', party_id=guest).set_rol
 partition = 4
 
 # upload a dataset
+
 path_to_fate_project = '/home/user/Workbench/tan_haonan/FATE_Ltr/'
-print("1")
 guest_data = {"name": "web30k_homo_guest_2", "namespace": "experiment"}
 host_data = {"name": "web30k_homo_host_2", "namespace": "experiment"}
 pipeline_upload.add_upload_data(file="/data/Corpus/MSLR-WEB30K/Fold2/train.txt", # file in the example/data
@@ -26,3 +26,23 @@ pipeline_upload.add_upload_data(file="/data/Corpus/MSLR-WEB30K/Fold2/vali.txt", 
 
 
 pipeline_upload.upload(drop=1)
+
+
+
+"""
+# upload a dataset
+path_to_fate_project = '../../../../'
+guest_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+host_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+pipeline_upload.add_upload_data(file="/home/user/Workbench/tan_haonan/FATE_Ltr/examples/data/breast_hetero_guest.csv", # file in the example/data
+                                table_name=guest_data["name"],             # table name
+                                namespace=guest_data["namespace"],         # namespace
+                                head=1, partition=partition)               # data info
+pipeline_upload.add_upload_data(file="/home/user/Workbench/tan_haonan/FATE_Ltr/examples/data/breast_hetero_host.csv", # file in the example/data
+                                table_name=host_data["name"],             # table name
+                                namespace=host_data["namespace"],         # namespace
+                                head=1, partition=partition)               # data info
+
+
+pipeline_upload.upload(drop=1)
+"""

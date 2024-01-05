@@ -3,7 +3,8 @@ from federatedml.nn.dataset.table_LTR import LTRDataset, SPLIT_TYPE
 from federatedml.nn.loss.lambda_loss import LambdaLoss
 
 
-ds = LTRDataset(file='/home/user/Workbench/tan_haonan/FATE_Ltr/examples/data/mq2008_homo_guest.csv', split_type=SPLIT_TYPE.Train, presort=False,data_id="MQ2008_Super",
+ds = LTRDataset(data_id="MQ2008_Super")
+ds.load(file_path='/home/user/Workbench/tan_haonan/FATE_Ltr/examples/data/mq2008_homo_guest.csv', split_type=SPLIT_TYPE.Train, presort=False,
                                  data_dict=None, eval_dict=None)
 # load MNIST data and check
 # ds.load('/home/user/Workbench/tan_haonan/FATE_Ltr/examples/data/mq2008_homo_guest.csv')

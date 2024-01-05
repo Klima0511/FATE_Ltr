@@ -318,8 +318,29 @@ class Evaluation(ModelBase):
         elif self.eval_type == consts.CLUSTERING:
             LOGGER.debug('running clustering')
             eval_result = self._evaluate_clustering_metrics(mode, data)
+        elif self.eval_type == 'ranking':
+            LOGGER.debug('running ranking')
+            return self._evaluate_ranking_metrics(mode, data)
 
         return eval_result
+
+    def _evaluate_ranking_metrics(self, mode, data):
+        labels, pred_scores = self._extract_ranking_data(data)
+        ndcg_score = self._calculate_ndcg(labels, pred_scores)
+        eval_result = {"NDCG": [mode, ndcg_score]}
+        return eval_result
+
+    def _extract_ranking_data(self, data):
+        return 1
+
+    # Extract and return labels and predicted scores from data
+    # ...
+
+    def _calculate_ndcg(self, labels, pred_scores):
+        return 1
+
+    # Implement the NDCG calculation
+    # ...
 
     def obtain_data(self, data_list):
         return data_list
